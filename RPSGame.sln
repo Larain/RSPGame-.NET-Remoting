@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RPSClient", "RSPClient\RPSClient.csproj", "{0A8AC3DC-3EBF-4EF2-B2DE-2C3DEA6866B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSPModel", "RSPModel\RSPModel.csproj", "{3D6E2655-B53E-473D-91BC-4095F32F22A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSPServer", "RSPServer\RSPServer.csproj", "{E26989E3-6523-4260-8DD3-01765EA56DA7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0A8AC3DC-3EBF-4EF2-B2DE-2C3DEA6866B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A8AC3DC-3EBF-4EF2-B2DE-2C3DEA6866B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A8AC3DC-3EBF-4EF2-B2DE-2C3DEA6866B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A8AC3DC-3EBF-4EF2-B2DE-2C3DEA6866B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D6E2655-B53E-473D-91BC-4095F32F22A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D6E2655-B53E-473D-91BC-4095F32F22A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D6E2655-B53E-473D-91BC-4095F32F22A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D6E2655-B53E-473D-91BC-4095F32F22A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E26989E3-6523-4260-8DD3-01765EA56DA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E26989E3-6523-4260-8DD3-01765EA56DA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E26989E3-6523-4260-8DD3-01765EA56DA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E26989E3-6523-4260-8DD3-01765EA56DA7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

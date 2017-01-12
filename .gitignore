@@ -47,7 +47,10 @@ Temporary Items
 .apdisk
 
 # Visual Studio
-.dll
-.pdb
-.obj
 /.vs
+*.exe
+*.dll
+*.Cache
+*.pdb
+*/obj
+*/bin

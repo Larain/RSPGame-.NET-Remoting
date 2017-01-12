@@ -28,7 +28,7 @@ namespace RSPClient
             var sPort = 8900;
             ChannelServices.RegisterChannel(CreateChannel(sPort), false);
             _game = new Game();
-            RemotingServices.Marshal(_game, "GameObject");
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(Game), "GameObject", WellKnownObjectMode.Singleton);
 
             Console.WriteLine("Server status is ... OK");
             Console.WriteLine("Port = " + sPort);
@@ -38,17 +38,16 @@ namespace RSPClient
 
         private TcpChannel CreateChannel(int port)
         {
-            var
-                sp = new BinaryServerFormatterSinkProvider();
-            sp.TypeFilterLevel = TypeFilterLevel.Full; // Дозволити
-            //передачу делегатів
-            var
-                cp = new BinaryClientFormatterSinkProvider();
-            IDictionary props = new Hashtable();
-            props["port"] = port;
-            props["typeFilterLevel"] = TypeFilterLevel.Full;
-            props["name"] = "Channel" + port; // here enter unique channel name
-            return new TcpChannel(props, cp, sp);
+            var sp = new BinaryServerFormatterSinkProvider();
+            var cp = new BinaryClientFormatterSinkProvider();
+
+            sp.TypeFilterLevel = TypeFilterLevel.Full; // Allow delegate transfer
+
+            IDictionary propertiesDictionary = new Hashtable();
+            propertiesDictionary["port"] = port;
+            propertiesDictionary["typeFilterLevel"] = TypeFilterLevel.Full;
+            propertiesDictionary["name"] = "Channel" + port; // here enter unique channel name
+            return new TcpChannel(propertiesDictionary, cp, sp);
         }
 
         public void ConnectToServer()

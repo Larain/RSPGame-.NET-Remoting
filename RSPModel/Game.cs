@@ -1,120 +1,152 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
+using RSPModel.Interface;
 
 namespace RSPModel
 {
-    public delegate void ShowPlayerHandler(Player player);
+    public delegate void ShowResultHandler(Dictionary<IPlayer, Color> color);
+    public delegate void SendTextHandler(String text);
 
-    public class Game : MarshalByRefObject
+    public class Game : MarshalByRefObject, IGame, IDisposable
     {
-        private bool _gameStatus;
+        private int _portCounter;
+        private List<IPlayer> _players;
         private List<string> _namesOfPlayers;
+        private List<IPlayer> _winners;
+        private bool _gameStatus;
 
-        public List<Player> Winners { get; private set; }
+        public event ShowResultHandler ShowResult;
+        public event SendTextHandler SendText;
 
-        public List<Player> Players { get; set; }
 
-        public event ShowPlayerHandler ShowPlayer;
+        public List<IPlayer> Winners
+        {
+            get { return _winners ?? (_winners = new List<IPlayer>()); }
+        }
 
-        public Player ConnectNewPlayer(Player p)
+        public List<IPlayer> Players
+        {
+            get { return _players ?? (_players = new List<IPlayer>()); }
+        }
+
+        public bool Connect(IPlayer p)
         {
             if (!_gameStatus)
             {
-                if (Players == null)
+                if (_players == null)
                 {
-                    Players = new List<Player>();
+                    _players = new List<IPlayer>();
                     _namesOfPlayers = new List<string>();
                 }
                 if (!_namesOfPlayers.Contains(p.Name))
                 {
-                    p.Number = Players.Count;
-                    Players.Add(p);
+                    p.Number = _players.Count;
+                    _players.Add(p);
                     _namesOfPlayers.Add(p.Name);
-                    OnShowPlayer(p);
-                    return p;
+                    LogUserAction(p.Name + " connected");
+                    
+                    return true;
                 }
                 throw new ArgumentException("Player with this name is already in a game");
             }
             throw new EntryPointNotFoundException("Game is in progress. Wait few seconds.");
         }
 
-        public void Disconnect(Player p)
+        private void LogUserAction(string text)
         {
-            try
-            {
-                Players.Remove(p);
-                _namesOfPlayers.Remove(p.Name);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            SendText?.Invoke(text + "\n");
         }
 
-        public List<Player> StartGame()
+        public bool Disconnect(IPlayer p)
         {
-            if (Winners != null)
-                Winners.Clear();
-            if (Players.Count > 1)
+            _players.Remove(p);
+            _namesOfPlayers.Remove(p.Name);
+            return true;
+        }
+
+        public void StartGame()
+        {
+            _winners?.Clear();
+            if (_players.Count > 1)
             {
                 // Waiting for players to make moves;
-                var ready = true;
-                foreach (var p in Players)
-                    if (p.Figure == "")
+                bool ready = true;
+                foreach (IPlayer p in _players)
+                {
+                    LogUserAction(p.Name + " " + p.Figure);
+                    if (p.Figure == Figure.Empty)
                         ready = false;
+                }
                 if (ready)
                 {
                     _gameStatus = true;
                     // Getting players figures;
-                    var rock = false;
-                    var paper = false;
-                    var scissors = false;
+                    bool rock = false;
+                    bool paper = false;
+                    bool scissors = false;
 
-                    foreach (var p in Players)
+                    foreach (IPlayer p in _players)
                     {
-                        if (p.Figure == "rock")
+                        if (p.Figure == Figure.Rock)
                             rock = true;
-                        if (p.Figure == "paper")
+                        if (p.Figure == Figure.Paper)
                             paper = true;
-                        if (p.Figure == "scissors")
+                        if (p.Figure == Figure.Scissors)
                             scissors = true;
                     }
 
+                    Dictionary<IPlayer, Color> results = new Dictionary<IPlayer, Color>();
+                    foreach (IPlayer p in Players)
+                    {
+                        results.Add(p, Color.Black);
+                    }
                     // Check if there are any winner;
                     if (IsAnyWinner(rock, paper, scissors))
                     {
-                        Winners = GetWinners(rock, paper, scissors, Players);
-
-                        foreach (var p in Winners)
+                        _winners = GetWinners(rock, paper, scissors);
+                        List<IPlayer> losers = Players.Except(_winners).ToList();
+                        
+                        foreach (IPlayer p in _winners)
                         {
                             p.Win();
-                            OnShowPlayer(p);
+                            results.Remove(p);
+                            results.Add(p, Color.SeaGreen);
                         }
                     }
                     foreach (var p in Players)
+                    {
+                        OnShowPlayer(results);
+                    }
+                    foreach (IPlayer p in _players)
                         ClearPlayersFigure();
                 }
             }
             _gameStatus = false;
-            return Winners;
         }
 
-        public List<Player> GetWinners(bool rock, bool paper, bool scissors, List<Player> participiants)
+        public List<IPlayer> GetWinners(bool rock, bool paper, bool scissors)
         {
-            var winnersList = new List<Player>();
-            if (rock && paper)
-                foreach (var p in Players)
-                    if (p.Figure == "paper")
-                        winnersList.Add(p);
-            if (rock && scissors)
-                foreach (var p in Players)
-                    if (p.Figure == "rock")
-                        winnersList.Add(p);
-            if (scissors && paper)
-                foreach (var p in Players)
-                    if (p.Figure == "scissors")
-                        winnersList.Add(p);
-            return winnersList;
+            if (_players.Count > 0)
+            {
+                List<IPlayer> winnersList = new List<IPlayer>();
+                if (rock && scissors)
+                    foreach (IPlayer p in _players)
+                        if (p.Figure == Figure.Rock)
+                            winnersList.Add(p);
+                if (rock && paper)
+                    foreach (IPlayer p in _players)
+                        if (p.Figure == Figure.Paper)
+                            winnersList.Add(p);
+                if (scissors && paper)
+                    foreach (IPlayer p in _players)
+                        if (p.Figure == Figure.Scissors)
+                            winnersList.Add(p);
+                return winnersList;
+            }
+            throw new InvalidOperationException("Not enough players.");
         }
 
         public bool IsAnyWinner(bool rock, bool paper, bool scissors)
@@ -128,25 +160,28 @@ namespace RSPModel
 
         public void ClearPlayersFigure()
         {
-            foreach (var p in Players)
+            foreach (IPlayer p in _players)
+                p.Reset();
+        }
+
+        public void OnShowPlayer(Dictionary<IPlayer, Color> color)
+        {
+            ShowResult?.Invoke(color);
+        }
+
+        public int GetPortForPlayer()
+        {
+            int port = 8901 + _portCounter++;
+            LogUserAction(port.ToString() + " Is Opened!");
+            return port;
+        }
+
+        public void Dispose()
+        {
+            foreach (var player in Players)
             {
-                p.ResetPlayer();
-                p.Moved = false;
+                player.Exit();
             }
-        }
-
-        // згенерувати подію
-        public void OnShowPlayer(Player p)
-        {
-            if (ShowPlayer != null)
-                ShowPlayer(p);
-        }
-
-        //Оновити (перемалювати) форму усіх гравців
-        public void ShowAllPlayers()
-        {
-            foreach (var p in Players)
-                OnShowPlayer(p);
         }
     }
 }

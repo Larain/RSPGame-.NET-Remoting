@@ -1,29 +1,35 @@
 ﻿using System;
 using System.Drawing;
+using RSPModel.Interface;
 
 namespace RSPModel
 {
-    public class Player : MarshalByRefObject
+
+    public delegate void FigureChangedHandler(Figure figure, string playerName);
+    public delegate void ExitAppHandler();
+    public class Player : MarshalByRefObject, IPlayer, IDisposable
     {
-        private readonly Game _game;
         private string _name;
         private int _score;
+        public event FigureChangedHandler FigureChanged;
+        public event ExitAppHandler ExitApp;
+        private Figure _figure;
 
-        public Player(string name, Color color, Game game)
+        public Player(IGame game)
         {
-            _name = name;
-            Color = color;
+            _figure = Figure.Empty;
             _score = 0;
-            _game = game;
-            Moved = false;
+            Game = game;
         }
+
+        public IGame Game { get; }
 
         public string Name
         {
             get { return _name; }
             set
             {
-                if (_name.Length < 12)
+                if (value.Length < 12)
                     _name = value;
                 else
                     throw new ArgumentOutOfRangeException($"Name is too long");
@@ -32,29 +38,27 @@ namespace RSPModel
 
         public int Number { get; set; }
 
-        public bool Moved { get; set; }
-
-        public string Figure { get; private set; }
-
-        public Color Color { get; set; }
-
-        public void MakeMove(string input)
+        public Figure Figure
         {
-            if (input == "rock" || input == "paper" || input == "scissors")
+            get { return _figure; }
+            private set
             {
-                Figure = input;
-                Moved = true;
-                _game.StartGame();
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException("Wrong figure name");
+                _figure = value;
+                FigureChanged(_figure, Name);
             }
         }
 
-        public void ResetPlayer()
+        public Color Color { get; set; }
+
+        public void Move(Figure figure)
         {
-            Figure = "";
+            Figure = figure;
+            Game.StartGame();
+        }
+
+        public void Reset()
+        {
+            Figure = Figure.Empty;
         }
 
         public void Win()
@@ -65,6 +69,16 @@ namespace RSPModel
         public void ResetScore()
         {
             _score = 0;
+        }
+
+        public void Exit()
+        {
+            ExitApp.Invoke();
+        }
+
+        public void Dispose()
+        {
+            Game.Disconnect(this);
         }
     }
 }
